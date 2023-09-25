@@ -198,7 +198,7 @@ router.post('/applyBonafide',async(req,res)=>{
                 console.log(content);
                 // console.log(pdfContents.toString('base64'));
                 //getting back the pdf from the buffer
-                fs.writeFileSync('./temppdf/original1.pdf', pdfContents);
+                //fs.writeFileSync('./temppdf/original1.pdf', pdfContents);
 
 
                 //bonfide part
