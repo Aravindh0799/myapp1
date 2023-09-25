@@ -71,12 +71,16 @@ router.post('/login',async(req,res)=>{
     console.log(req.body)
     try{
         const user = await student.findOne({email:email})
+        const fac_user = await faculty.findOne({email:email})
+        const hod_user = await hod.findOne({email:email})
+        const prc_user = await principal.findOne({email:email})
         console.log(user,"from try")
         if(user){
             if(await bcrypt.compare(password, user.password)){
                 console.log(user.password)
                 return res.json({
                     status:200,
+                    message:"user"
                 })
             }
             else{
@@ -86,6 +90,54 @@ router.post('/login',async(req,res)=>{
                 })
             }
         }
+        else if(fac_user){
+            if(await bcrypt.compare(password, fac_user.password)){
+                console.log(fac_user.password)
+                return res.json({
+                    status:200,
+                    message:"fac"
+                })
+            }
+            else{
+                console.log("error")
+                return res.json({
+                    status:300
+                })
+            }
+        }
+        
+        else if(hod_user){
+            if(await bcrypt.compare(password, hod_user.password)){
+                console.log(hod_user.password)
+                return res.json({
+                    status:200,
+                    message:"hod"
+                })
+            }
+            else{
+                console.log("error")
+                return res.json({
+                    status:300
+                })
+            }
+        }
+
+        else if(prc_user){
+            if(await bcrypt.compare(password, prc_user.password)){
+                console.log(prc_user.password)
+                return res.json({
+                    status:200,
+                    message:"prnc"
+                })
+            }
+            else{
+                console.log("error")
+                return res.json({
+                    status:300
+                })
+            }
+        }
+
         else{
             console.log("error")
                 return res.json({
@@ -146,7 +198,7 @@ router.post('/applyBonafide',async(req,res)=>{
                 console.log(content);
                 // console.log(pdfContents.toString('base64'));
                 //getting back the pdf from the buffer
-                // fs.writeFileSync('./temppdf/original.pdf', pdfContents);
+                fs.writeFileSync('./temppdf/original1.pdf', pdfContents);
 
 
                 //bonfide part
