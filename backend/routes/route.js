@@ -100,6 +100,12 @@ router.post('/login',async(req,res)=>{
 
 router.post('/applyBonafide',async(req,res)=>{
     const{email,reason}=req.body
+    console.log("from apply api",reason)
+    if(reason===""){
+        return res.json({
+            message:"empty_reason"
+        })
+    }
     try{
         const user = await student.findOne({email:email})
 
