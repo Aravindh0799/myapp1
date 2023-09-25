@@ -180,7 +180,7 @@ router.post('/applyBonafide',async(req,res)=>{
                 const bfide = new bonafides({
                     name:bfname,
                     email:email,
-                    b_type:"sample",
+                    b_type:reason,
                     data_file:content 
                 })
                 const result = bfide.save()
