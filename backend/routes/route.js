@@ -180,6 +180,8 @@ router.post('/applyBonafide',async(req,res)=>{
                 const bfide = new bonafides({
                     name:bfname,
                     email:email,
+                    dept:dept,
+                    year:year,
                     b_type:reason,
                     data_file:content 
                 })

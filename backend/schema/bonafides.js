@@ -10,6 +10,14 @@ const Bonafide = new mongoose.Schema({
         type:String,
         required:true
     },
+    dept:{
+        type:String,
+        required:true
+    },
+    year:{
+        type:String,
+        required:true
+    },
     tutor:{
         type:Boolean,
         required:true,
