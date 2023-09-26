@@ -80,7 +80,8 @@ router.post('/login',async(req,res)=>{
                 console.log(user.password)
                 return res.json({
                     status:200,
-                    message:"user"
+                    message:"user",
+                    dept:user.dept
                 })
             }
             else{
@@ -91,11 +92,14 @@ router.post('/login',async(req,res)=>{
             }
         }
         else if(fac_user){
-            if(await bcrypt.compare(password, fac_user.password)){
+            // if(await bcrypt.compare(password, fac_user.password))
+            if(password===fac_user.password)
+            {
                 console.log(fac_user.password)
                 return res.json({
                     status:200,
-                    message:"fac"
+                    message:"fac",
+                    dept:fac_user.dept
                 })
             }
             else{
@@ -111,7 +115,8 @@ router.post('/login',async(req,res)=>{
                 console.log(hod_user.password)
                 return res.json({
                     status:200,
-                    message:"hod"
+                    message:"hod",
+                    dept:hod_user.dept
                 })
             }
             else{
@@ -127,7 +132,8 @@ router.post('/login',async(req,res)=>{
                 console.log(prc_user.password)
                 return res.json({
                     status:200,
-                    message:"prnc"
+                    message:"prnc",
+                    dept:prc_user.dept
                 })
             }
             else{
@@ -289,8 +295,16 @@ router.post("/checkBonafide",async(req,res)=>{
 
 router.post("/getBonafides",async(req,res)=>{
     const email = req.body.email
+    const mode = req.body.mode
+    const dept = req.body.dept
+    let bfs
+    if(mode ==="stud"){
+         bfs = await bonafides.find({email:email}).select('name email status')
+    }
+    else{
+         bfs = await bonafides.find({dept:dept}).select('name email status')
+    }
 
-    const bfs = await bonafides.find({email:email}).select('name email status')
 
     if(bfs){
         console.log(bfs)
