@@ -5,6 +5,7 @@ const router = express.Router()
 // const jwt = require('jsonwebtoken')
 // const otp = require('otp-generator')
 // const JWT_SECRET = "ciwbuconciwevccwu1229238c/idb871cb91383hc}28vwrgbw8b748{62[]()69cwv";
+const regularFontPath = './Times New Roman/times new roman.ttf';
 const student = require('../schema/students');
 const faculty = require('../schema/faculty')
 const hod = require('../schema/hod')
@@ -12,6 +13,7 @@ const principal = require('../schema/principal')
 const bcrypt  = require('bcrypt')
 const multer = require('multer')
 const bonafides = require('../schema/bonafides');
+const qrcode = require('qrcode'); // Import the qrcode library
 router.post('/register',async(req,res)=>{
     const{name,email,password,resiStatus,dob,dept,year,religion,nationality,address} = req.body;
     const encryptedPassword = await bcrypt.hash(password,10);
@@ -158,6 +160,18 @@ router.post('/login',async(req,res)=>{
     }
 })
 
+// Function to generate a QR code and return it as a data URL
+async function generateQRCode(data) {
+    try {
+      const qrCodeDataURL = await qrcode.toDataURL(data); // Generate the QR code
+      return qrCodeDataURL;
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      return null;
+    }
+  }
+
+
 
 router.post('/applyBonafide',async(req,res)=>{
     const{email,reason}=req.body
@@ -186,11 +200,45 @@ router.post('/applyBonafide',async(req,res)=>{
 
             doc.pipe(pdfBuffer)
             
-            doc
-                .fontSize(25)
-                .text(name, 100, 100)
-                .text(email, 100, 150);
+            // doc
+            //     .fontSize(25)
+            //     .text(name, 100, 100)
+            //     .text(email, 100, 150);
 
+            // doc.image('./images/bonafide_template.png', 0, 0, { width: 800, height:600  });
+
+            // doc.fontSize(19).font(regularFontPath).text(name,300,235);
+            // doc.fontSize(15).font(regularFontPath).text(dob,141,272);
+            // doc.fontSize(15).font(regularFontPat).text(year,140,300);
+            
+            doc.image('./images/Logo.png',0,0,{height:100,width:600  });
+            doc.moveDown(3);
+            doc.font(regularFontPath).text('TO WHOMSOEVER IT MAY CONCERN',{align:'center',underline: true});
+            doc.moveDown(1);
+            doc.font(regularFontPath).text(`Date: 17/07/2023`,{align:'right'});
+            doc.moveDown(3);
+            const firstLineIndentation = 20;
+            doc.text(' '.repeat(firstLineIndentation), { continued: true });
+            doc.font(regularFontPath).text(`This is to certify that ${name} (), S/o ,is a bonafidestudent of our college and currently studying in second year ${dept} branch. As Per our records, the following are his personal details. `);
+
+            doc.moveDown(2);
+            const secondLineIndentation = 10;
+            doc.text(' '.repeat(secondLineIndentation), { continued: true });
+            doc.font(regularFontPath).text(`1. Date of Birth : ${dob}`);
+            doc.text(' '.repeat(secondLineIndentation), { continued: true });
+            doc.font(regularFontPath).text(`2. Religion : ${religion}`);
+            doc.text(' '.repeat(secondLineIndentation), { continued: true });
+            doc.font(regularFontPath).text(`3. Nationality : ${nationality}`);
+            doc.text(' '.repeat(secondLineIndentation), { continued: true });
+            doc.font(regularFontPath).text(`4. Address : ${address}`);
+
+            doc.moveDown(2);
+            // const thirdLineIndentation = 10;
+            // doc.text(' '.repeat(thirdLineIndentation), { continued: true });
+            doc.font(regularFontPath).text(`He is ${resiStatus}`);
+        
+            doc.moveDown(2);
+            doc.font(regularFontPath).text(`The Certificate is issued on his request to enable him to apply for ${reason}`);
             doc
                 .save()
             
