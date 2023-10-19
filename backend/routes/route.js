@@ -240,7 +240,7 @@ router.post('/applyBonafide',async(req,res)=>{
             doc.moveDown(2);
             // const thirdLineIndentation = 10;
             // doc.text(' '.repeat(thirdLineIndentation), { continued: true });
-            doc.font(regularFontPath).text(`He is ${resiStatus}`);
+            doc.font(regularFontPath).text(`He resides in ${resiStatus}`);
         
             doc.moveDown(2);
             doc.font(regularFontPath).text(`The Certificate is issued on his request to enable him to apply for ${reason}`);
