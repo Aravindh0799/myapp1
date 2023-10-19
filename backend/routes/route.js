@@ -101,7 +101,8 @@ router.post('/login',async(req,res)=>{
                 return res.json({
                     status:200,
                     message:"fac",
-                    dept:fac_user.dept
+                    dept:fac_user.dept,
+                    year:fac_user.year
                 })
             }
             else{
@@ -113,7 +114,9 @@ router.post('/login',async(req,res)=>{
         }
         
         else if(hod_user){
-            if(await bcrypt.compare(password, hod_user.password)){
+            // if(await bcrypt.compare(password, hod_user.password))
+            if(password===hod_user.password)
+            {
                 console.log(hod_user.password)
                 return res.json({
                     status:200,
@@ -130,11 +133,13 @@ router.post('/login',async(req,res)=>{
         }
 
         else if(prc_user){
-            if(await bcrypt.compare(password, prc_user.password)){
+            // if(await bcrypt.compare(password, prc_user.password))
+            if(password===prc_user.password)
+            {
                 console.log(prc_user.password)
                 return res.json({
                     status:200,
-                    message:"prnc",
+                    message:"prc",
                     dept:prc_user.dept
                 })
             }
@@ -248,7 +253,8 @@ router.post('/applyBonafide',async(req,res)=>{
             
             pdfBuffer.on('finish', () => {
                 const pdfContents = pdfBuffer.getContents();
-                content = pdfContents.toString('base64')
+                const content = atob(pdfContents)
+                // content = pdfContents.toString('base64')
                 console.log(content);
                 // console.log(pdfContents.toString('base64'));
                 //getting back the pdf from the buffer
@@ -345,17 +351,54 @@ router.post("/getBonafides",async(req,res)=>{
     const email = req.body.email
     const mode = req.body.mode
     const dept = req.body.dept
-    let bfs
-    if(mode ==="stud"){
-         bfs = await bonafides.find({email:email}).select('name email status')
-    }
-    else{
-         bfs = await bonafides.find({dept:dept})
-    }
-
+    let bfs = await bonafides.find({email:email}).select('name email status')
 
     if(bfs){
         console.log(bfs)
+        return res.json({message:"success",data:bfs})
+    }
+    else{
+        return res.json({message:"failed"})
+    }
+})
+
+router.post("/getBonafidesFac",async(req,res)=>{
+    const email = req.body.email
+    const mode = req.body.mode 
+    const dept = req.body.dept
+    const year = req.body.year
+    console.log(req.body)
+    let bfs = await bonafides.find({dept:dept,year:year,dwnd:false,hod:false,principal:false,tutor:false,status:"Pending"})
+
+    if(bfs){
+        console.log("from fac",bfs)
+        return res.json({message:"success",data:bfs})
+    }
+    else{
+        return res.json({message:"failed"})
+    }
+})
+
+router.post("/getBonafidesHod",async(req,res)=>{
+    const email = req.body.email
+    const mode = req.body.mode 
+    const dept = req.body.dept
+    let bfs = await bonafides.find({dept:dept,tutor:true,hod:false,dwnd:false,status:"Pending"})
+    if(bfs){
+        console.log("from hod",bfs)
+        return res.json({message:"success",data:bfs})
+    }
+    else{
+        return res.json({message:"failed"})
+    }
+})
+
+router.post("/getBonafidesPrc",async(req,res)=>{
+    const email = req.body.email
+    const mode = req.body.mode 
+    let bfs = await bonafides.find({tutor:true,hod:true,principal:false,dwnd:false,status:"Pending"})
+    if(bfs){
+        console.log("from prc",bfs)
         return res.json({message:"success",data:bfs})
     }
     else{
@@ -385,5 +428,74 @@ router.post('/getpdf',async(req,res)=>{
 
 })
 
+
+router.post("/approveBonafide",async(req,res)=>{
+    console.log(req.body)
+
+    const {id,mode}=req.body
+
+    if(mode==="fac"){
+        const temp = await bonafides.findOneAndUpdate({_id:id},{tutor:"true"})
+
+        if(temp.modifiedCount!=0){
+            console.log(temp)
+            console.log("updated")
+           
+        }
+    }
+
+    else if(mode==="hod"){
+        const temp = await bonafides.findOneAndUpdate({_id:id},{hod:"true"})
+        if(temp.modifiedCount!=0){
+            console.log("updated")
+            const temp = await bonafides.find({_id:id})
+            console.log(temp[0])
+            if(temp[0].b_type==="Competition"){
+                console.log("inside comp")
+                const temp1 = await bonafides.findOneAndUpdate({_id:id},{dwnd:"true",status:"success"})
+                if(temp1.modifiedCount==0){
+                    return res.json({message: "failed"})
+                }
+            }
+        }
+    }
+
+    else if(mode==="prc"){
+        const temp = await bonafides.findOneAndUpdate({_id:id},{principal:"true"})
+        if(temp.modifiedCount!=0){
+            console.log("updated")
+            const temp1 = await bonafides.findOneAndUpdate({_id:id},{dwnd:"true",status:"success"})
+
+        }
+    }
+    else{
+        return res.json({
+            message:"failed"
+        })
+    }
+
+    return res.json({
+        message:"success"
+    })
+})
+
+
+router.post('/rejectBonafide',async(req,res)=>{
+    console.log(req.body)
+    const{id,mode}=req.body
+    var temp = "Rejected by " + mode
+    const result = await bonafides.findOneAndUpdate({_id:id},{status:temp})
+
+    if(result.modifiedCount!=0){
+        return res.json({
+            message:"success"
+        })
+    }
+    else{
+        return res.json({
+            message:"failed"
+        })
+    }
+})
 
 module.exports=router
