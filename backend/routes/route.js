@@ -13,6 +13,7 @@ const principal = require('../schema/principal')
 const bcrypt  = require('bcrypt')
 const multer = require('multer')
 const bonafides = require('../schema/bonafides');
+const qrcode =require('qrcode');
 router.post('/register',async(req,res)=>{
     const{name,email,password,resiStatus,dob,dept,year,religion,nationality,address} = req.body;
     const encryptedPassword = await bcrypt.hash(password,10);
@@ -365,13 +366,13 @@ router.post("/getBonafides",async(req,res)=>{
 
 
 router.post('/getpdf',async(req,res)=>{
-    const reqid = req.body
-    const objectId = new mongoose.Types.ObjectId(reqid)
+    const reqid = req.body.id
+    console.log(reqid)
     try{
-    const pdf = await bonafides.findOne({_id:objectId})
+    const pdf = await bonafides.findOne({'_id':reqid})
     const data = pdf.data_file
     const base64String = Buffer.from(data).toString('base64')
-    console.log(data)
+    console.log(pdf)
     if(pdf){
 
         return res.json({
