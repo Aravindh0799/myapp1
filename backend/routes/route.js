@@ -253,8 +253,8 @@ router.post('/applyBonafide',async(req,res)=>{
             
             pdfBuffer.on('finish', () => {
                 const pdfContents = pdfBuffer.getContents();
-                const content = atob(pdfContents)
-                // content = pdfContents.toString('base64')
+                // const content = atob(pdfContents)
+                content = pdfContents.toString('base64')
                 console.log(content);
                 // console.log(pdfContents.toString('base64'));
                 //getting back the pdf from the buffer
@@ -413,15 +413,23 @@ router.post('/getpdf',async(req,res)=>{
     console.log(reqid)
     try{
     const pdf = await bonafides.findOne({'_id':reqid})
-    const data = pdf.data_file
-    const base64String = Buffer.from(data).toString('base64')
-    console.log(pdf)
-    if(pdf){
-
-        return res.json({
-            content : base64String
-        })
-    }
+    console.log(pdf.status=="success")
+    if(pdf.status=="success"){
+        const data = pdf.data_file
+        const base64String = Buffer.from(data).toString()
+        // console.log(pdf)
+        if(pdf.status=="success"){
+            return res.json({
+                message:"download",
+                content : base64String
+            })
+        }
+        }
+        else{
+            return res.json({
+                message : "failed"
+            })
+        }
 }catch(err){
     console.log(err)
 }
