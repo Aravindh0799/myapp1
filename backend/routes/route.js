@@ -13,7 +13,13 @@ const principal = require('../schema/principal')
 const bcrypt  = require('bcrypt')
 const multer = require('multer')
 const bonafides = require('../schema/bonafides');
-const qrcode =require('qrcode');
+const QRCode =require('qrcode');
+const fs = require('fs');
+const { PDFDocument, rgb } = require('pdf-lib');
+const { Buffer } = require('buffer');
+
+
+
 router.post('/register',async(req,res)=>{
     const{name,email,password,resiStatus,dob,dept,year,religion,nationality,address} = req.body;
     const encryptedPassword = await bcrypt.hash(password,10);
@@ -165,16 +171,6 @@ router.post('/login',async(req,res)=>{
     }
 })
 
-// Function to generate a QR code and return it as a data URL
-async function generateQRCode(data) {
-    try {
-      const qrCodeDataURL = await qrcode.toDataURL(data); // Generate the QR code
-      return qrCodeDataURL;
-    } catch (error) {
-      console.error('Error generating QR code:', error);
-      return null;
-    }
-  }
 
 
 
@@ -192,30 +188,13 @@ router.post('/applyBonafide',async(req,res)=>{
         if(user){
             console.log("from applyBonafide",user)
             const{name,email,password,resiStatus,dob,dept,year,religion,nationality,address} = user;
-            
-            //pdf creation
-            const PDFDocument = require('pdfkit');
-            const fs = require('fs');
             const buffer = require('stream-buffers').WritableStreamBuffer;
+            const PDFDocument = require('pdfkit');
             const doc = new PDFDocument();
-
-            // doc.pipe(fs.createWriteStream('./temppdf/output.pdf'));
-
             const pdfBuffer = new buffer();
 
             doc.pipe(pdfBuffer)
-            
-            // doc
-            //     .fontSize(25)
-            //     .text(name, 100, 100)
-            //     .text(email, 100, 150);
 
-            // doc.image('./images/bonafide_template.png', 0, 0, { width: 800, height:600  });
-
-            // doc.fontSize(19).font(regularFontPath).text(name,300,235);
-            // doc.fontSize(15).font(regularFontPath).text(dob,141,272);
-            // doc.fontSize(15).font(regularFontPat).text(year,140,300);
-            
             doc.image('./images/Logo.png',0,0,{height:100,width:600  });
             doc.moveDown(3);
             doc.font(regularFontPath).text('TO WHOMSOEVER IT MAY CONCERN',{align:'center',underline: true});
@@ -413,7 +392,6 @@ router.post('/getpdf',async(req,res)=>{
     console.log(reqid)
     try{
     const pdf = await bonafides.findOne({'_id':reqid})
-    console.log(pdf.status=="success")
     if(pdf.status=="success"){
         const data = pdf.data_file
         const base64String = Buffer.from(data).toString()
@@ -436,45 +414,97 @@ router.post('/getpdf',async(req,res)=>{
 
 })
 
+// Function to generate a QR code
+async function generateQRCode(data) {
+    return new Promise((resolve, reject) => {
+      QRCode.toFile('qrcode.png', data, (err) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve (Buffer.from(fs.readFileSync('qrcode.png')).toString('base64'));
+        }
+      });
+    });
+}
+
+  async function AddandUpdateQrPDF(base64Pdf,qrCodeImageBuffer,id) {
+    try {
+      const pdfDoc = await PDFDocument.load(Buffer.from(base64Pdf, 'base64'));
+      const qrCodeImage = await pdfDoc.embedPng( Buffer.from(qrCodeImageBuffer,'base64'));
+      const pages = pdfDoc.getPages();
+      const firstPage = pages[0];
+  
+      // 4. Add text to the page.
+      firstPage.drawImage(qrCodeImage, {
+        x: 100,
+        y: 400,
+        size: 25,
+        color: rgb(0, 0, 0),
+      });
+
+      const modifiedBase64Pdf = Buffer.from(await pdfDoc.save()).toString('base64');
+
+      await bonafides.findOneAndUpdate({_id:id},{data_file:modifiedBase64Pdf})
+  
+      // 7. Return the modified Base64 PDF.
+      return modifiedBase64Pdf;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+
+
 
 router.post("/approveBonafide",async(req,res)=>{
-    console.log(req.body)
-
     const {id,mode}=req.body
-
+    const bonafideDetail = await bonafides.findOne({ _id: id });
+    const studentDetail=await student.findOne(({email:bonafideDetail.email}))
     if(mode==="fac"){
         const temp = await bonafides.findOneAndUpdate({_id:id},{tutor:"true"})
-
         if(temp.modifiedCount!=0){
-            console.log(temp)
             console.log("updated")
-           
         }
     }
 
     else if(mode==="hod"){
-        const temp = await bonafides.findOneAndUpdate({_id:id},{hod:"true"})
-        if(temp.modifiedCount!=0){
-            console.log("updated")
-            const temp = await bonafides.find({_id:id})
-            console.log(temp[0])
-            if(temp[0].b_type==="Competition"){
-                console.log("inside comp")
-                const temp1 = await bonafides.findOneAndUpdate({_id:id},{dwnd:"true",status:"success"})
-                if(temp1.modifiedCount==0){
-                    return res.json({message: "failed"})
-                }
-            }
+        if (bonafideDetail.b_type==='Competition'){
+            await bonafides.findOneAndUpdate({_id:id},{hod:"true",dwnd:"true",status:"success"})
+            const formattedData = `\nName:${studentDetail.name} \nEmail:${studentDetail.email} \nReason:${bonafideDetail.b_type} \nStatus:Approved \nApproved by : HoD \nApplied (Date & Time):${bonafideDetail.createdAt} \nApproved (Date & Time):${bonafideDetail.updatedAt}`;
+            const qrCodeImageBuffer = await generateQRCode(formattedData);
+            AddandUpdateQrPDF(Buffer.from(bonafideDetail.data_file).toString(),qrCodeImageBuffer,bonafideDetail._id)
+            .then((modifiedBase64Pdf) => {
+                console.log('Successly Modified the PDF');
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }else{
+            await bonafides.findOneAndUpdate({_id:id},{hod:"true"});
         }
+        // if(temp.modifiedCount!=0){
+        //     const temp = await bonafides.find({_id:id})
+        //     if(temp[0].b_type==="Competition"){
+        //         console.log("inside comp")
+        //         const temp1 = await bonafides.findOneAndUpdate({_id:id},{dwnd:"true",status:"success"})
+        //         if(temp1.modifiedCount==0){
+        //             return res.json({message: "failed"})
+        //         }
+        //     }
+        // }
     }
 
     else if(mode==="prc"){
-        const temp = await bonafides.findOneAndUpdate({_id:id},{principal:"true"})
-        if(temp.modifiedCount!=0){
-            console.log("updated")
-            const temp1 = await bonafides.findOneAndUpdate({_id:id},{dwnd:"true",status:"success"})
-
-        }
+        await bonafides.findOneAndUpdate({_id:id},{hod:"true",dwnd:"true",status:"success"})
+        const formattedData = `\nName:${studentDetail.name} \nEmail:${studentDetail.email} \nReason:${bonafideDetail.b_type} \nStatus:Approved \nApproved by : Principal \nApplied (Date & Time):${bonafideDetail.createdAt} \nApproved (Date & Time):${bonafideDetail.updatedAt}`;
+        const qrCodeImageBuffer = await generateQRCode(formattedData);
+        AddandUpdateQrPDF(Buffer.from(bonafideDetail.data_file).toString(),qrCodeImageBuffer,bonafideDetail._id)
+        .then((modifiedBase64Pdf) => {
+            console.log('Successly Modified the PDF');
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
     }
     else{
         return res.json({
