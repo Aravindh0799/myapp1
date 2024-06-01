@@ -4,15 +4,15 @@ const app = express()
 app.use(express.json())
 
 app.use(cors({
-    origin:"*",
+    origin: "*",
 }))
 
 const routes = require('./routes/route')
 app.use(routes)
 
-const port = process.env.port || 8080;
+const port = process.env.port || 10080;
 require('./conn')
 
-app.listen(port,()=>{
+app.listen(port, () => {
     console.log(`server running at port ${port} `);
 })
