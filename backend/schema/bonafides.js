@@ -2,62 +2,77 @@ const mongoose = require('mongoose')
 
 
 const Bonafide = new mongoose.Schema({
-    name:{
-        type:String,
-        required:true
+    name: {
+        type: String,
+        required: true
     },
-    email:{
-        type:String,
-        required:true
+    stud: {
+        type: String,
+        required: true
     },
-    dept:{
-        type:String,
-        required:true
+    email: {
+        type: String,
+        required: true
     },
-    year:{
-        type:String,
-        required:true
+    dept: {
+        type: String,
+        required: true
     },
-    tutor:{
-        type:Boolean,
-        required:true,
-        default:false
+    prog: {
+        type: String,
+        default: ""
     },
-    hod:{
-        type:Boolean,
-        required:true,
-        default:false
+    year: {
+        type: String,
+        required: true
     },
-    principal:{
-        type:Boolean,
-        required:true,
-        default:false
+    section: {
+        type: String,
+        required: false
     },
-    b_type:{
-        type:String,
-        required:true
+    tutor: {
+        type: Boolean,
+        required: true,
+        default: false
     },
-    
-    dwnd:{
-        type:Boolean,
-        required:true,
-        default:false
+    hod: {
+        type: Boolean,
+        required: true,
+        default: false
     },
-    data_file:{
-        type:Buffer,
-        required:true
+    principal: {
+        type: Boolean,
+        required: true,
+        default: false
     },
-    apd_date:{
-        type:Date,
+    b_type: {
+        type: String,
+        required: true
     },
-    status:{
-        type:String,
-        required:true,
-        default:"Pending"
+
+    dwnd: {
+        type: Boolean,
+        required: true,
+        default: false
+    },
+    data_file: {
+        type: Buffer,
+        required: true
+    },
+    apd_date: {
+        type: Date,
+    },
+    status: {
+        type: String,
+        required: true,
+        default: "Pending - Tutor"
+    },
+    verificationNum: {
+        type: String,
     }
-    
-},{
-    timestamps:true
+
+}, {
+    timestamps: true
 })
 
 
